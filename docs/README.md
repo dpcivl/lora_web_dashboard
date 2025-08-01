@@ -1,152 +1,170 @@
-# LoRa Gateway Logger 문서
+# LoRa Web Dashboard
 
-## 문서 개요
+## 개요
 
-이 폴더는 LoRa Gateway Logger 프로젝트와 웹 애플리케이션 개발을 위한 포괄적인 문서를 포함합니다.
+LoRa Gateway Logger에서 수집된 데이터를 시각화하고 모니터링하는 웹 대시보드입니다. 
+실시간으로 LoRa 디바이스의 메시지를 확인하고, 통계 정보를 제공하며, 디바이스별 상세 정보를 볼 수 있습니다.
 
-## 문서 목록
+## 주요 기능
 
-### 📊 데이터베이스 관련
-- **[database-schema.md](./database-schema.md)** - SQLite 데이터베이스 스키마 정보
-- **[database-connection.md](./database-connection.md)** - 데이터베이스 연결 설정 가이드
+### 📊 대시보드
+- 실시간 메시지 수신 현황
+- 시간대별 메시지 통계 차트
+- 신호 품질 분석 차트
+- 디바이스별 메시지 수 순위
 
-### 🔧 설정 및 환경
-- **[port-configuration.md](./port-configuration.md)** - 포트 설정 및 네트워크 구성
-- **[raspberry-pi-environment.md](./raspberry-pi-environment.md)** - 라즈베리파이 환경 설정
+### 🔍 디바이스 관리
+- 디바이스 목록 및 메시지 수 표시
+- 디바이스별 상세 정보 페이지
+- Frame Count 추적
+- 신호 품질 모니터링 (RSSI, SNR)
+- JOIN 이벤트 추적
 
-### 📡 LoRa 데이터
-- **[lora-data-structure.md](./lora-data-structure.md)** - LoRa 데이터 구조 및 메시지 형식
+### 📈 실시간 모니터링
+- WebSocket을 통한 실시간 데이터 업데이트
+- 메시지 스트리밍
+- 자동 통계 갱신
 
-### 🏗️ 프로젝트 구조
-- **[project-structure.md](./project-structure.md)** - 전체 프로젝트 구조 및 모듈 설명
+## 기술 스택
 
-### 💻 개발 가이드
-- **[development-guide.md](./development-guide.md)** - 개발 환경 설정 및 코딩 표준
-- **[web-integration-guide.md](./web-integration-guide.md)** - Java + JavaScript 웹 애플리케이션 통합
+### 백엔드
+- **Spring Boot 3.x** - 메인 프레임워크
+- **Spring Data JPA** - 데이터베이스 ORM
+- **SQLite** - 데이터베이스
+- **WebSocket** - 실시간 통신
+- **Java 17** - 프로그래밍 언어
+
+### 프론트엔드
+- **React 18** - UI 프레임워크
+- **TypeScript** - 타입 안전성
+- **Chart.js** - 데이터 시각화
+- **WebSocket Client** - 실시간 통신
+
+### 인프라
+- **Docker & Docker Compose** - 컨테이너화
+- **Nginx** - 웹서버 (프로덕션)
+- **MQTT Broker (Mosquitto)** - 메시지 브로커
+
+## 프로젝트 구조
+
+```
+lora_web_dashboard/
+├── docs/                          # 문서
+├── src/main/java/                 # 백엔드 소스코드
+│   └── com/lora/dashboard/
+│       ├── controller/            # REST API 컨트롤러
+│       ├── service/               # 비즈니스 로직
+│       ├── repository/            # 데이터 액세스
+│       ├── entity/                # JPA 엔티티
+│       ├── dto/                   # 데이터 전송 객체
+│       ├── config/                # 설정 클래스
+│       └── websocket/             # WebSocket 핸들러
+├── frontend/                      # 프론트엔드 소스코드
+│   ├── src/
+│   │   ├── components/            # React 컴포넌트
+│   │   ├── hooks/                 # 커스텀 훅
+│   │   ├── api/                   # API 클라이언트
+│   │   └── types/                 # TypeScript 타입
+│   └── public/                    # 정적 파일
+├── docker-compose.yml             # Docker 구성
+├── Dockerfile                     # Docker 이미지 빌드
+├── pom.xml                        # Maven 설정
+└── README.md                      # 프로젝트 개요
+```
 
 ## 빠른 시작
 
-### 1. 프로젝트 개요 파악
-먼저 [project-structure.md](./project-structure.md)를 읽어 전체 프로젝트 구조를 이해하세요.
+### 1. 사전 요구사항
+- Java 17+
+- Node.js 18+
+- Maven 3.6+
+- Docker & Docker Compose (선택사항)
 
-### 2. 개발 환경 설정
-[development-guide.md](./development-guide.md)를 따라 로컬 개발 환경을 구축하세요.
+### 2. 의존성 설치
+```bash
+# 프론트엔드 의존성 설치
+cd frontend
+npm install
 
-### 3. 데이터베이스 이해
-[database-schema.md](./database-schema.md)에서 데이터 구조를 파악하고, [database-connection.md](./database-connection.md)에서 연결 방법을 확인하세요.
-
-### 4. LoRa 데이터 이해
-[lora-data-structure.md](./lora-data-structure.md)에서 LoRa 메시지 형식과 처리 방법을 학습하세요.
-
-### 5. 웹 애플리케이션 개발
-[web-integration-guide.md](./web-integration-guide.md)를 참조하여 Java + JavaScript 웹 애플리케이션을 구현하세요.
-
-## 문서 사용 가이드
-
-### 개발자용
-- 새로운 기능 개발 시: `development-guide.md` → `project-structure.md` → 관련 기술 문서
-- 버그 수정 시: `project-structure.md` → 해당 모듈 문서 → `development-guide.md`
-
-### 운영자용
-- 초기 설치: `raspberry-pi-environment.md` → `port-configuration.md` → `database-connection.md`
-- 문제 해결: 각 문서의 "문제 해결" 섹션 참조
-
-### 웹 개발자용
-- 백엔드 개발: `database-schema.md` → `lora-data-structure.md` → `web-integration-guide.md`
-- 프론트엔드 개발: `lora-data-structure.md` → `web-integration-guide.md`
-
-## 기술 스택 요약
-
-### 백엔드 (LoRa Gateway Logger)
-- **언어**: Python 3.9+
-- **프레임워크**: paho-mqtt
-- **데이터베이스**: SQLite
-- **컨테이너**: Docker
-
-### 웹 애플리케이션
-- **백엔드**: Java + Spring Boot
-- **프론트엔드**: JavaScript (React 권장)
-- **데이터베이스**: SQLite (공유)
-- **통신**: REST API + WebSocket
-
-### 인프라
-- **MQTT 브로커**: Eclipse Mosquitto
-- **플랫폼**: 라즈베리파이 (또는 Linux)
-- **모니터링**: 로그 기반
-
-## 주요 개념
-
-### LoRaWAN 아키텍처
-```
-LoRa 디바이스 → LoRaWAN 게이트웨이 → 네트워크 서버 → 애플리케이션 서버
-                                                                    ↓
-                                                              MQTT 브로커
-                                                                    ↓
-                                                          LoRa Gateway Logger
-                                                                    ↓
-                                                            SQLite 데이터베이스
-                                                                    ↓
-                                                          웹 애플리케이션
+# 루트 디렉터리로 돌아가기
+cd ..
 ```
 
-### 데이터 흐름
-1. **수집**: LoRa 디바이스에서 데이터 전송
-2. **전송**: MQTT를 통한 메시지 전달
-3. **처리**: Python 애플리케이션에서 파싱 및 저장
-4. **저장**: SQLite 데이터베이스에 구조化 저장
-5. **조회**: 웹 애플리케이션을 통한 데이터 시각화
+### 3. 실행 방법
 
-## 문서 업데이트 가이드
+#### Docker 사용 (권장)
+```bash
+# 모든 서비스 실행
+docker-compose up -d
 
-### 문서 작성 원칙
-1. **명확성**: 기술적 내용을 명확하게 설명
-2. **실용성**: 실제 구현 가능한 예제 포함
-3. **완성도**: 처음부터 끝까지 따라할 수 있는 완전한 가이드
-4. **최신성**: 코드 변경시 문서도 함께 업데이트
+# 접속
+# 웹 대시보드: http://localhost:3001
+# 백엔드 API: http://localhost:8081
+```
 
-### 문서 구조
-- **개요**: 문서의 목적과 범위
-- **설정**: 환경 설정 및 준비사항
-- **구현**: 단계별 구현 가이드
-- **예제**: 실제 사용 가능한 코드 예제
-- **문제해결**: 일반적인 문제와 해결방법
-- **참고자료**: 추가 학습 자료
+#### 개발 모드 실행
+```bash
+# 백엔드 실행 (터미널 1)
+mvn spring-boot:run
 
-### 기여 방법
-1. 새로운 문서 추가시 이 README.md 업데이트
-2. 코드 변경시 관련 문서 동시 업데이트
-3. 오타나 개선사항 발견시 즉시 수정
-4. 예제 코드는 실제 테스트 후 포함
+# 프론트엔드 실행 (터미널 2)
+cd frontend
+npm start
 
-## 추가 리소스
+# 접속
+# 웹 대시보드: http://localhost:3000
+# 백엔드 API: http://localhost:8081
+```
 
-### 외부 문서
-- [LoRaWAN 사양서](https://lora-alliance.org/resource_hub/lorawan-specification-v1-0-3/)
-- [MQTT 프로토콜](https://mqtt.org/mqtt-specification/)
-- [SQLite 문서](https://www.sqlite.org/docs.html)
-- [Spring Boot 가이드](https://spring.io/guides)
+### 4. 데이터베이스 설정
+- SQLite 데이터베이스 파일 `lora_gateway.db`를 프로젝트 루트에 배치
+- LoRa Gateway Logger에서 생성된 데이터베이스를 사용
 
-### 도구 및 유틸리티
-- [MQTT Explorer](http://mqtt-explorer.com/) - MQTT 메시지 모니터링
-- [DB Browser for SQLite](https://sqlitebrowser.org/) - SQLite 데이터베이스 관리
-- [Postman](https://www.postman.com/) - API 테스트
+## API 엔드포인트
 
-## 지원 및 문의
+### 메시지 관리
+- `GET /messages/recent` - 최근 메시지 조회
+- `GET /messages/device/{deviceId}` - 디바이스별 메시지 조회
+- `GET /messages/device/{deviceId}/latest` - 디바이스 최신 메시지
+- `GET /messages/statistics` - 통계 정보
 
-### 문제 신고
-- 버그 리포트: GitHub Issues 사용
-- 기능 요청: GitHub Discussions 사용
-- 문서 개선: Pull Request 제출
+### JOIN 이벤트
+- `GET /join-events/recent` - 최근 JOIN 이벤트
+- `GET /join-events/device/{deviceId}` - 디바이스별 JOIN 이벤트
 
-### 개발 커뮤니티
-- 기술 질문: 프로젝트 Wiki 활용
-- 코드 리뷰: Pull Request 과정에서 진행
-- 지식 공유: 문서 기여 및 예제 추가
+### 헬스체크
+- `GET /health` - 서비스 상태 확인
+- `GET /health/info` - 서비스 정보
 
----
+## 환경 설정
 
-📝 **문서 버전**: 1.0  
-📅 **최종 업데이트**: 2025년 7월 31일
-👥 **기여자**: 개발팀  
+### 백엔드 설정 (application.yml)
+```yaml
+spring:
+  datasource:
+    url: jdbc:sqlite:lora_gateway.db
+  jpa:
+    database-platform: org.hibernate.dialect.SQLiteDialect
+    
+server:
+  port: 8081
+```
 
-이 문서들이 프로젝트 개발과 웹 애플리케이션 구현에 도움이 되기를 바랍니다!
+### 프론트엔드 환경변수
+```env
+REACT_APP_API_BASE_URL=http://localhost:8081
+REACT_APP_WS_URL=ws://localhost:8081/ws
+```
+
+## 개발 가이드 링크
+
+- [프로젝트 구조 상세](./project-structure.md)
+- [API 문서](./api-documentation.md)
+- [데이터베이스 스키마](./database-schema.md)
+- [배포 가이드](./deployment-guide.md)
+- [개발 환경 설정](./development-setup.md)
+- [트러블슈팅](./troubleshooting.md)
+
+## 라이선스
+
+이 프로젝트는 MIT 라이선스 하에 배포됩니다.

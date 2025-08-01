@@ -1,301 +1,197 @@
-# 프로젝트 구조 문서
+# 프로젝트 구조
 
-## 개요
+## 전체 아키텍처
 
-LoRa Gateway Logger는 LoRaWAN 디바이스로부터 전송되는 데이터를 MQTT를 통해 수신하고, SQLite 데이터베이스에 저장하는 Python 애플리케이션입니다.
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   React Frontend │    │  Spring Boot    │    │   SQLite DB     │
+│   (Port 3000)   │◄──►│   Backend       │◄──►│  lora_gateway   │
+│                 │    │   (Port 8081)   │    │                 │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+         ▲                       ▲
+         │                       │
+         ▼                       ▼
+┌─────────────────┐    ┌─────────────────┐
+│   WebSocket     │    │   MQTT Broker   │
+│   Connection    │    │   (Port 1883)   │
+└─────────────────┘    └─────────────────┘
+```
 
 ## 디렉터리 구조
 
+### 루트 디렉터리
 ```
-lora_gateway_logger/
-├── core/                      # 핵심 모듈
-│   ├── __init__.py
-│   ├── data_processor.py      # 데이터 처리 로직
-│   ├── message_parser.py      # 메시지 파싱 로직
-│   └── mqtt_client.py         # MQTT 클라이언트
-├── docs/                      # 문서
-│   ├── database-schema.md     # DB 스키마 정보
-│   ├── database-connection.md # DB 연결 정보
-│   ├── port-configuration.md  # 포트 설정
-│   ├── lora-data-structure.md # LoRa 데이터 구조
-│   ├── raspberry-pi-environment.md # 라즈베리파이 환경
-│   └── project-structure.md   # 이 문서
-├── config.py                  # 설정 관리
-├── database.py                # 데이터베이스 모듈
-├── main.py                    # 메인 애플리케이션
-├── models.py                  # 데이터 모델
-├── requirements.txt           # Python 의존성
-├── Dockerfile                 # Docker 이미지 빌드
-├── docker-compose.test.yml    # Docker Compose 설정
-├── mosquitto.conf             # MQTT 브로커 설정
-├── deploy.sh                  # 배포 스크립트
-├── deploy_with_agent.sh       # 에이전트 포함 배포
-├── mock_mqtt_publisher.py     # 테스트용 MQTT 퍼블리셔
-├── test_*.py                  # 단위 테스트 파일들
-├── README.md                  # 프로젝트 설명
-└── README_TESTING.md          # 테스트 가이드
+lora_web_dashboard/
+├── docs/                          # 📚 프로젝트 문서
+├── src/                           # ☕ 백엔드 Java 소스코드
+├── frontend/                      # ⚛️ 프론트엔드 React 소스코드
+├── docker-compose.yml             # 🐳 Docker 서비스 구성
+├── docker-compose-minimal.yml     # 🐳 최소 Docker 구성
+├── Dockerfile                     # 🐳 멀티스테이지 빌드
+├── pom.xml                        # 📦 Maven 프로젝트 설정
+├── .gitignore                     # 🚫 Git 무시 파일
+├── nginx.conf                     # 🌐 Nginx 설정
+├── mosquitto.conf                 # 📡 MQTT 브로커 설정
+└── start.sh                       # 🚀 시작 스크립트
 ```
 
-## 핵심 모듈 설명
+## 백엔드 구조 (Spring Boot)
 
-### 1. main.py
-애플리케이션의 진입점입니다.
+### 패키지 구조
+```
+src/main/java/com/lora/dashboard/
+├── LoraWebDashboardApplication.java   # 🚀 메인 애플리케이션
+├── config/                            # ⚙️ 설정 클래스
+│   ├── AsyncConfig.java              # 비동기 처리 설정
+│   ├── WebConfig.java                # CORS 및 웹 설정
+│   └── WebSocketConfig.java          # WebSocket 설정
+├── controller/                        # 🎮 REST API 컨트롤러
+│   ├── HealthController.java         # 헬스체크 API
+│   ├── MessageController.java        # 메시지 관리 API
+│   └── JoinEventController.java      # JOIN 이벤트 API
+├── service/                           # 💼 비즈니스 로직
+│   ├── MessageService.java           # 메시지 서비스
+│   └── RealtimeService.java          # 실시간 데이터 서비스
+├── repository/                        # 🗄️ 데이터 액세스 계층
+│   ├── UplinkMessageRepository.java  # 업링크 메시지 리포지토리
+│   └── JoinEventRepository.java      # JOIN 이벤트 리포지토리
+├── entity/                            # 📋 JPA 엔티티
+│   ├── UplinkMessage.java            # 업링크 메시지 엔티티
+│   ├── JoinEvent.java                # JOIN 이벤트 엔티티
+│   └── SignalQuality.java            # 신호 품질 열거형
+├── dto/                               # 📤 데이터 전송 객체
+│   └── StatisticsDto.java            # 통계 DTO
+└── websocket/                         # 🔌 WebSocket 핸들러
+    └── MessageWebSocketHandler.java  # 메시지 WebSocket 핸들러
+```
 
-**주요 기능:**
-- 설정 로드 및 로깅 초기화
-- LoRaGatewayLogger 인스턴스 생성 및 실행
-- 시그널 처리 (SIGINT)
+### 주요 클래스 설명
 
-**주요 클래스:**
-- `LoRaGatewayLogger`: 메인 애플리케이션 클래스
+#### 컨트롤러 (Controller)
+- **HealthController**: 서비스 상태 확인 및 정보 제공
+- **MessageController**: 업링크 메시지 CRUD 및 통계
+- **JoinEventController**: JOIN 이벤트 관리
 
-### 2. config.py
-환경 변수 기반 설정 관리 모듈입니다.
+#### 서비스 (Service)
+- **MessageService**: 메시지 처리, 통계 계산, 데이터 집계
+- **RealtimeService**: WebSocket을 통한 실시간 데이터 푸시
 
-**주요 클래스:**
-- `MQTTConfig`: MQTT 브로커 설정
-- `DatabaseConfig`: 데이터베이스 설정
-- `LoggingConfig`: 로깅 설정
-- `AppConfig`: 전체 애플리케이션 설정
+#### 엔티티 (Entity)
+- **UplinkMessage**: LoRa 업링크 메시지 데이터 모델
+- **JoinEvent**: LoRa JOIN 이벤트 데이터 모델
+- **SignalQuality**: 신호 품질 등급 (EXCELLENT, GOOD, FAIR, POOR)
 
-**주요 함수:**
-- `load_config_from_env()`: 환경 변수에서 설정 로드
-- `setup_logging()`: 로깅 시스템 초기화
+## 프론트엔드 구조 (React)
 
-### 3. models.py
-데이터 모델 정의 모듈입니다.
+### 디렉터리 구조
+```
+frontend/
+├── public/                        # 🌐 정적 파일
+│   └── index.html                # HTML 엔트리포인트
+├── src/                          # ⚛️ React 소스코드
+│   ├── components/               # 🧩 React 컴포넌트
+│   │   ├── Dashboard.tsx         # 메인 대시보드
+│   │   ├── Header.tsx            # 헤더 컴포넌트
+│   │   ├── Sidebar.tsx           # 사이드바 네비게이션
+│   │   ├── DeviceView.tsx        # 디바이스 상세보기
+│   │   ├── DeviceCountsTable.tsx # 디바이스 목록 테이블
+│   │   ├── MessageList.tsx       # 메시지 목록
+│   │   ├── JoinEventList.tsx     # JOIN 이벤트 목록
+│   │   ├── StatisticsCards.tsx   # 통계 카드
+│   │   ├── HourlyMessagesChart.tsx # 시간별 차트
+│   │   ├── SignalQualityChart.tsx  # 신호품질 차트
+│   │   └── RealtimeMessages.tsx  # 실시간 메시지
+│   ├── hooks/                    # 🎣 커스텀 훅
+│   │   └── useWebSocket.ts       # WebSocket 훅
+│   ├── api/                      # 🌐 API 클라이언트
+│   │   └── client.ts             # HTTP 클라이언트
+│   ├── types/                    # 📝 TypeScript 타입
+│   │   └── index.ts              # 타입 정의
+│   ├── App.tsx                   # 📱 메인 앱 컴포넌트
+│   ├── index.tsx                 # 🚀 앱 엔트리포인트
+│   ├── App.css                   # 🎨 앱 스타일
+│   └── index.css                 # 🎨 글로벌 스타일
+├── package.json                  # 📦 NPM 의존성
+└── tsconfig.json                # ⚙️ TypeScript 설정
+```
 
-**주요 클래스:**
-- `UplinkMessage`: 업링크 메시지 데이터 클래스
-- `JoinEvent`: JOIN 이벤트 데이터 클래스
+### 주요 컴포넌트 설명
 
-**주요 메서드:**
-- `to_dict()`: 딕셔너리 변환 (JSON 직렬화용)
-- `from_payload_summary()`: 페이로드에서 객체 생성
+#### 페이지 컴포넌트
+- **Dashboard**: 메인 대시보드 (통계, 차트, 디바이스 목록)
+- **DeviceView**: 디바이스 상세 정보 페이지
 
-### 4. database.py
-SQLite 데이터베이스 관리 모듈입니다.
+#### UI 컴포넌트
+- **Header**: 상단 헤더 (제목, 네비게이션)
+- **Sidebar**: 좌측 사이드바 (메뉴)
+- **StatisticsCards**: 통계 요약 카드들
+- **DeviceCountsTable**: 디바이스별 메시지 수 테이블
 
-**주요 클래스:**
-- `LoRaDatabase`: SQLite 데이터베이스 관리
+#### 차트 컴포넌트
+- **HourlyMessagesChart**: 시간별 메시지 수 차트
+- **SignalQualityChart**: 신호 품질 분포 차트
 
-**주요 메서드:**
-- `insert_uplink_message()`: 업링크 메시지 저장
-- `insert_join_event()`: JOIN 이벤트 저장
-- `get_recent_messages()`: 최근 메시지 조회
-- `get_statistics()`: 통계 정보 조회
-
-## Core 모듈 상세
-
-### 1. core/mqtt_client.py
-MQTT 클라이언트 관리 모듈입니다.
-
-**주요 클래스:**
-- `LoRaMQTTClient`: MQTT 클라이언트 래퍼
-
-**주요 메서드:**
-- `connect()`: MQTT 브로커 연결
-- `set_message_callback()`: 메시지 콜백 설정
-- `start_loop()`: 메시지 수신 루프 시작
-
-### 2. core/message_parser.py
-LoRa 메시지 파싱 모듈입니다.
-
-**주요 클래스:**
-- `LoRaMessageParser`: 메시지 파싱 로직
-
-**주요 메서드:**
-- `parse_topic()`: MQTT 토픽 파싱
-- `parse_payload()`: JSON 페이로드 파싱
-- `extract_uplink_summary()`: 업링크 정보 추출
-- `extract_join_summary()`: JOIN 정보 추출
-
-### 3. core/data_processor.py
-데이터 처리 및 저장 모듈입니다.
-
-**주요 클래스:**
-- `LoRaDataProcessor`: 데이터 처리 로직
-
-**주요 메서드:**
-- `process_uplink_message()`: 업링크 메시지 처리
-- `process_join_event()`: JOIN 이벤트 처리
-- `get_statistics()`: 처리 통계 조회
+#### 데이터 컴포넌트
+- **MessageList**: 메시지 목록 테이블
+- **JoinEventList**: JOIN 이벤트 목록
+- **RealtimeMessages**: 실시간 메시지 스트림
 
 ## 설정 파일
 
-### 환경 변수
-애플리케이션은 다음 환경 변수들을 사용합니다:
-
-```bash
-# MQTT 설정
-MQTT_BROKER_HOST=localhost
-MQTT_BROKER_PORT=1883
-MQTT_USERNAME=username
-MQTT_PASSWORD=password
-MQTT_CONNECTION_RETRIES=3
-MQTT_CONNECTION_TIMEOUT=60
-
-# 데이터베이스 설정
-ENABLE_SQLITE=true
-DATABASE_PATH=lora_gateway.db
-
-# 로깅 설정
-LOG_LEVEL=INFO
-LOG_FILE=lora_gateway.log
-LOG_MAX_SIZE=10485760
-LOG_BACKUP_COUNT=5
-SYSLOG_HOST=remote-server
-SYSLOG_PORT=514
-
-# 애플리케이션 설정
-STATS_INTERVAL=300
+### 백엔드 설정
+```
+src/main/resources/
+└── application.yml               # Spring Boot 설정
 ```
 
-## 테스트 구조
+### Docker 설정
+- **Dockerfile**: 멀티스테이지 빌드 (프론트엔드 빌드 → 백엔드 빌드 → 최종 이미지)
+- **docker-compose.yml**: 전체 서비스 구성 (웹앱, MQTT, LoRa Logger)
+- **docker-compose-minimal.yml**: 웹앱과 MQTT만 포함
 
-### 단위 테스트 파일
-
-1. **test_lora_gateway.py**
-   - 메인 애플리케이션 로직 테스트
-   - MQTT 메시지 처리 테스트
-
-2. **test_sqlite.py**
-   - SQLite 데이터베이스 기능 테스트
-   - CRUD 작업 테스트
-
-3. **test_integration.py**
-   - 통합 테스트
-   - 전체 워크플로우 테스트
-
-4. **test_refactored.py**
-   - 리팩토링 후 회귀 테스트
-
-### 테스트 도구
-
-- **mock_mqtt_publisher.py**: 테스트용 MQTT 메시지 발송 도구
-
-## 배포 구조
-
-### Docker 환경
-
-1. **Dockerfile**
-   ```dockerfile
-   FROM python:3.9-slim
-   WORKDIR /app
-   COPY requirements.txt .
-   RUN pip install -r requirements.txt
-   COPY main.py .
-   COPY *.py .
-   RUN mkdir -p /app/logs
-   CMD ["python", "main.py"]
-   ```
-
-2. **docker-compose.test.yml**
-   - MQTT 브로커 (Eclipse Mosquitto)
-   - LoRa Gateway Logger 애플리케이션
-
-### 배포 스크립트
-
-1. **deploy.sh**: 기본 배포 스크립트
-2. **deploy_with_agent.sh**: 에이전트 포함 배포
+### 웹서버 설정
+- **nginx.conf**: Nginx 설정 (정적 파일 서빙, API 프록시)
 
 ## 데이터 흐름
 
+### 1. 데이터 수집 흐름
 ```
-LoRa Device → LoRaWAN Gateway → MQTT Broker → LoRa Gateway Logger → SQLite Database
-                                                      ↓
-                                              JSON Files (백업)
+LoRa Gateway → MQTT Broker → LoRa Gateway Logger → SQLite DB
 ```
 
-### 상세 데이터 흐름
+### 2. 웹 대시보드 데이터 흐름
+```
+SQLite DB → Spring Boot API → React Frontend → 사용자
+```
 
-1. **메시지 수신**: MQTT 클라이언트가 브로커에서 메시지 수신
-2. **토픽 파싱**: `application/{app_id}/device/{dev_id}/event/{event_type}` 형태 파싱
-3. **페이로드 파싱**: JSON 형태의 메시지 본문 파싱
-4. **데이터 추출**: 업링크/JOIN 이벤트별 주요 정보 추출
-5. **모델 생성**: `UplinkMessage` 또는 `JoinEvent` 객체 생성
-6. **데이터 저장**: SQLite 데이터베이스에 저장
-7. **JSON 백업**: JSON 파일로 백업 저장 (선택사항)
+### 3. 실시간 데이터 흐름
+```
+SQLite DB → RealtimeService → WebSocket → React Hook → UI 업데이트
+```
 
-## 로깅 시스템
+## 빌드 및 배포
 
-### 로그 레벨
-- `DEBUG`: 상세한 디버깅 정보
-- `INFO`: 일반적인 정보 메시지
-- `WARNING`: 경고 메시지
-- `ERROR`: 오류 메시지
+### 개발 환경
+- 백엔드: `mvn spring-boot:run` (포트 8081)
+- 프론트엔드: `npm start` (포트 3000)
 
-### 로그 출력 대상
-1. **콘솔**: 표준 출력
-2. **파일**: 로테이션 지원 파일 로깅
-3. **Syslog**: 원격 로그 서버 (선택사항)
+### 프로덕션 환경
+- Docker: `docker-compose up -d`
+- 웹 접속: http://localhost:3001
+- API 접속: http://localhost:8081
 
-## 성능 고려사항
+## 의존성
 
-### 메모리 사용량
-- SQLite 연결 풀링 없음 (단일 프로세스)
-- 메시지별 객체 생성 최소화
-- 통계 정보 주기적 출력 (메모리 누수 방지)
+### 백엔드 주요 의존성
+- Spring Boot Web
+- Spring Boot Data JPA
+- Spring Boot WebSocket
+- SQLite JDBC Driver
+- Spring Boot DevTools
 
-### 디스크 I/O
-- SQLite WAL 모드 사용 (동시성 향상)
-- 인덱스 최적화 (timestamp, device_id 기준)
-- 로그 파일 로테이션
-
-### 네트워크
-- MQTT QoS 0 사용 (성능 우선)
-- 연결 재시도 로직
-- Keep-alive 설정
-
-## 확장성 고려사항
-
-### 수평 확장
-- 다중 인스턴스 실행 가능 (디바이스/애플리케이션별 분리)
-- MQTT 토픽 필터링을 통한 부하 분산
-
-### 수직 확장
-- 메모리 사용량 모니터링
-- CPU 사용률 최적화
-- 디스크 공간 관리
-
-## 보안 고려사항
-
-### 인증 및 권한
-- MQTT 브로커 인증 (username/password)
-- SSL/TLS 지원 (MQTTS)
-
-### 데이터 보호
-- SQLite 파일 권한 관리
-- 로그 파일 보안
-- 네트워크 트래픽 암호화
-
-## 모니터링 포인트
-
-### 애플리케이션 상태
-- MQTT 연결 상태
-- 메시지 처리율
-- 오류 발생률
-- 메모리/CPU 사용률
-
-### 데이터 품질
-- 메시지 손실률
-- 파싱 오류율
-- 데이터베이스 저장 성공률
-
-### 시스템 리소스
-- 디스크 사용량
-- 네트워크 대역폭
-- SQLite 성능 지표
-
-## 문제 해결 가이드
-
-### 일반적인 문제
-1. **MQTT 연결 실패**: 브로커 설정 및 네트워크 확인
-2. **메시지 파싱 오류**: 페이로드 형식 검증
-3. **데이터베이스 오류**: SQLite 파일 권한 및 공간 확인
-4. **메모리 누수**: 통계 정보 및 가비지 컬렉션 모니터링
-
-### 로그 분석
-- 오류 패턴 분석
-- 성능 병목 지점 식별
-- 트렌드 분석을 통한 용량 계획
+### 프론트엔드 주요 의존성
+- React 18
+- TypeScript
+- React Router DOM
+- Chart.js
+- Axios (HTTP 클라이언트)
