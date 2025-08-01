@@ -72,7 +72,7 @@ public class MessageService {
         stats.setTotalJoinEvents(joinEventRepository.count());
         
         // 간단한 통계 
-        stats.setLast24HourMessages(0L);
+        stats.setLast24HourMessages(calculateLast24HourMessages());
         stats.setActiveDevices(1L); // 현재 1개 디바이스 활성
         
         // JOIN 이벤트는 적으므로 실제 계산 (최근 24시간)
@@ -121,6 +121,43 @@ public class MessageService {
 
     public List<String> getAllJoinEventApplicationIds() {
         return joinEventRepository.findDistinctApplicationIds();
+    }
+    
+    // 최근 24시간 메시지 수 계산
+    private long calculateLast24HourMessages() {
+        try {
+            // KST 현재 시간 기준으로 24시간 전
+            java.time.ZonedDateTime nowKst = java.time.ZonedDateTime.now(java.time.ZoneId.of("Asia/Seoul"));
+            java.time.ZonedDateTime yesterdayKst = nowKst.minusHours(24);
+            
+            // 모든 메시지를 가져와서 최근 24시간 내의 메시지만 카운트
+            List<UplinkMessage> allMessages = uplinkMessageRepository.findAll();
+            
+            long count = 0;
+            for (UplinkMessage message : allMessages) {
+                String timestampString = message.getTimestamp();
+                if (timestampString != null && !timestampString.isEmpty()) {
+                    try {
+                        // Timezone 정보가 포함된 timestamp 파싱
+                        java.time.ZonedDateTime kstTime = java.time.ZonedDateTime.parse(
+                            timestampString, 
+                            java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME
+                        );
+                        
+                        if (kstTime.isAfter(yesterdayKst)) {
+                            count++;
+                        }
+                    } catch (Exception e) {
+                        // 파싱 실패시 무시
+                    }
+                }
+            }
+            
+            return count;
+        } catch (Exception e) {
+            // 에러 발생시 0 반환
+            return 0L;
+        }
     }
     
     // 최근 JOIN 이벤트 계산 (24시간 내)
