@@ -14,15 +14,20 @@ const JoinEventList: React.FC<JoinEventListProps> = ({ applicationId }) => {
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
+  const [selectedApplicationId, setSelectedApplicationId] = useState<string | null>(applicationId || null);
 
   useEffect(() => {
-    fetchJoinEvents();
-  }, [page]);
+    if (selectedApplicationId) {
+      fetchJoinEvents();
+    }
+  }, [page, selectedApplicationId]);
 
   const fetchJoinEvents = async () => {
+    if (!selectedApplicationId) return;
+    
     try {
       setLoading(true);
-      const response = await joinEventAPI.getRecentJoinEvents(page, 20);
+      const response = await joinEventAPI.getApplicationJoinEvents(selectedApplicationId, page, 20);
       const data: ApiResponse<JoinEvent> = response.data;
       
       setJoinEvents(data.content);
@@ -63,6 +68,27 @@ const JoinEventList: React.FC<JoinEventListProps> = ({ applicationId }) => {
     return new Date(timestamp).toLocaleString('ko-KR');
   };
 
+  const handleApplicationSelect = (appId: string) => {
+    setSelectedApplicationId(appId);
+    setPage(0); // 새 애플리케이션 선택시 첫 페이지로
+  };
+
+  const handleBackToApplications = () => {
+    setSelectedApplicationId(null);
+    setJoinEvents([]);
+    setPage(0);
+  };
+
+  if (!selectedApplicationId) {
+    return (
+      <ApplicationList 
+        onApplicationSelect={handleApplicationSelect}
+        title="JOIN 이벤트 조회할 애플리케이션 선택"
+        type="join-event"
+      />
+    );
+  }
+
   if (loading) {
     return <div className="loading">JOIN 이벤트를 불러오는 중...</div>;
   }
@@ -75,7 +101,22 @@ const JoinEventList: React.FC<JoinEventListProps> = ({ applicationId }) => {
     <div className="join-event-list">
       <div className="card">
         <div className="card-header">
-          <h2>최근 JOIN 이벤트 ({totalElements?.toLocaleString() || 0}개)</h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <button 
+              onClick={handleBackToApplications}
+              className="back-button"
+              style={{ 
+                padding: '0.5rem 1rem', 
+                border: '1px solid #ddd', 
+                borderRadius: '4px',
+                background: '#f8f9fa',
+                cursor: 'pointer'
+              }}
+            >
+              ← 애플리케이션 목록
+            </button>
+            <h2>애플리케이션 "{selectedApplicationId}" JOIN 이벤트 ({totalElements?.toLocaleString() || 0}개)</h2>
+          </div>
         </div>
         <div className="card-body">
           <table className="table">

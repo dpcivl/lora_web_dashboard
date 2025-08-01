@@ -60,6 +60,10 @@ public class MessageService {
         return joinEventRepository.findByDeviceIdOrderByTimestampDesc(deviceId, pageable);
     }
 
+    public Page<JoinEvent> getJoinEventsByApplication(String applicationId, Pageable pageable) {
+        return joinEventRepository.findByApplicationIdOrderByTimestampDesc(applicationId, pageable);
+    }
+
     public StatisticsDto getStatistics() {
         StatisticsDto stats = new StatisticsDto();
 

@@ -63,6 +63,9 @@ export const joinEventAPI = {
   getDeviceJoinEvents: (deviceId: string, page = 0, size = 20) => 
     apiClient.get<ApiResponse<JoinEvent>>(`/join-events/device/${deviceId}?page=${page}&size=${size}`),
   
+  getApplicationJoinEvents: (applicationId: string, page = 0, size = 20) => 
+    apiClient.get<ApiResponse<JoinEvent>>(`/join-events/application/${applicationId}?page=${page}&size=${size}`),
+  
   getLatestDeviceJoinEvent: (deviceId: string) => 
     apiClient.get<JoinEvent>(`/join-events/device/${deviceId}/latest`),
   

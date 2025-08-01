@@ -42,6 +42,17 @@ public class JoinEventController {
         return ResponseEntity.ok(joinEvents);
     }
 
+    @GetMapping("/application/{applicationId}")
+    public ResponseEntity<Page<JoinEvent>> getApplicationJoinEvents(
+            @PathVariable String applicationId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        
+        Pageable pageable = PageRequest.of(page, size);
+        Page<JoinEvent> joinEvents = messageService.getJoinEventsByApplication(applicationId, pageable);
+        return ResponseEntity.ok(joinEvents);
+    }
+
     @GetMapping("/device/{deviceId}/latest")
     public ResponseEntity<JoinEvent> getLatestDeviceJoinEvent(@PathVariable String deviceId) {
         JoinEvent joinEvent = messageService.getLatestJoinEventByDevice(deviceId);

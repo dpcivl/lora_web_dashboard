@@ -16,7 +16,7 @@ public interface JoinEventRepository extends JpaRepository<JoinEvent, Long> {
     // 디바이스별 JOIN 이벤트 조회
     Page<JoinEvent> findByDeviceIdOrderByTimestampDesc(String deviceId, Pageable pageable);
     
-    // 애플리케이션별 JOIN 이벤트 조회
+    // 애플리케이션별 JOIN 이벤트 조회  
     Page<JoinEvent> findByApplicationIdOrderByTimestampDesc(String applicationId, Pageable pageable);
     
     // 최근 JOIN 이벤트 조회
