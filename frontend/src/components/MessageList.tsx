@@ -1,23 +1,33 @@
 import React, { useState, useEffect } from 'react';
 import { messageAPI } from '../api/client';
 import { UplinkMessage, ApiResponse, SignalQuality } from '../types';
+import ApplicationList from './ApplicationList';
 
-const MessageList: React.FC = () => {
+interface MessageListProps {
+  applicationId?: string;
+}
+
+const MessageList: React.FC<MessageListProps> = ({ applicationId }) => {
   const [messages, setMessages] = useState<UplinkMessage[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
+  const [selectedApplicationId, setSelectedApplicationId] = useState<string | null>(applicationId || null);
 
   useEffect(() => {
-    fetchMessages();
-  }, [page]);
+    if (selectedApplicationId) {
+      fetchMessages();
+    }
+  }, [page, selectedApplicationId]);
 
   const fetchMessages = async () => {
+    if (!selectedApplicationId) return;
+    
     try {
       setLoading(true);
-      const response = await messageAPI.getRecentMessages(page, 20);
+      const response = await messageAPI.getApplicationMessages(selectedApplicationId, page, 20);
       const data: ApiResponse<UplinkMessage> = response.data;
       
       setMessages(data.content);
@@ -58,6 +68,26 @@ const MessageList: React.FC = () => {
     return new Date(timestamp).toLocaleString('ko-KR');
   };
 
+  const handleApplicationSelect = (appId: string) => {
+    setSelectedApplicationId(appId);
+    setPage(0); // 새 애플리케이션 선택시 첫 페이지로
+  };
+
+  const handleBackToApplications = () => {
+    setSelectedApplicationId(null);
+    setMessages([]);
+    setPage(0);
+  };
+
+  if (!selectedApplicationId) {
+    return (
+      <ApplicationList 
+        onApplicationSelect={handleApplicationSelect}
+        title="메시지 조회할 애플리케이션 선택"
+      />
+    );
+  }
+
   if (loading) {
     return <div className="loading">메시지를 불러오는 중...</div>;
   }
@@ -70,7 +100,22 @@ const MessageList: React.FC = () => {
     <div className="message-list">
       <div className="card">
         <div className="card-header">
-          <h2>최근 LoRa 메시지 ({totalElements?.toLocaleString() || 0}개)</h2>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h2>애플리케이션 {selectedApplicationId} - LoRa 메시지 ({totalElements?.toLocaleString() || 0}개)</h2>
+            <button 
+              onClick={handleBackToApplications}
+              style={{
+                padding: '0.5rem 1rem',
+                backgroundColor: '#6c757d',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer'
+              }}
+            >
+              ← 애플리케이션 목록으로
+            </button>
+          </div>
         </div>
         <div className="card-body">
           <table className="table">

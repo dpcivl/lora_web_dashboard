@@ -1,8 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { joinEventAPI } from '../api/client';
 import { JoinEvent, ApiResponse, SignalQuality } from '../types';
+import ApplicationList from './ApplicationList';
 
-const JoinEventList: React.FC = () => {
+interface JoinEventListProps {
+  applicationId?: string;
+}
+
+const JoinEventList: React.FC<JoinEventListProps> = ({ applicationId }) => {
   const [joinEvents, setJoinEvents] = useState<JoinEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

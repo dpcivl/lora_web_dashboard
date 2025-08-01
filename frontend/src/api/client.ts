@@ -51,6 +51,9 @@ export const messageAPI = {
   
   getStatistics: () => 
     apiClient.get<Statistics>('/messages/statistics'),
+  
+  getApplications: () => 
+    apiClient.get<string[]>('/messages/applications'),
 };
 
 export const joinEventAPI = {
@@ -62,6 +65,9 @@ export const joinEventAPI = {
   
   getLatestDeviceJoinEvent: (deviceId: string) => 
     apiClient.get<JoinEvent>(`/join-events/device/${deviceId}/latest`),
+  
+  getJoinEventApplications: () => 
+    apiClient.get<string[]>('/join-events/applications'),
 };
 
 export const healthAPI = {
