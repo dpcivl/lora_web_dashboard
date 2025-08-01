@@ -32,8 +32,12 @@ const HourlyMessagesChart: React.FC<HourlyMessagesChartProps> = ({ hourlyCounts 
   
   const data = {
     labels: counts.map(item => {
-      const date = new Date(item.hour);
+      // "yyyy-MM-dd HH:00" 형식을 파싱
+      const dateStr = item.hour.replace(' ', 'T'); // ISO 형식으로 변환
+      const date = new Date(dateStr);
       return date.toLocaleTimeString('ko-KR', { 
+        month: 'short',
+        day: 'numeric',
         hour: '2-digit', 
         minute: '2-digit' 
       });

@@ -129,9 +129,9 @@ public class MessageService {
             // JOIN 이벤트가 적으므로 모두 가져와서 확인
             List<JoinEvent> allJoinEvents = joinEventRepository.findAll();
             
-            // 현재 시간에서 24시간 전
-            java.time.LocalDateTime now = java.time.LocalDateTime.now();
-            java.time.LocalDateTime yesterday = now.minusHours(24);
+            // KST 현재 시간에서 24시간 전
+            java.time.ZonedDateTime nowKst = java.time.ZonedDateTime.now(java.time.ZoneId.of("Asia/Seoul"));
+            java.time.ZonedDateTime yesterdayKst = nowKst.minusHours(24);
             
             long count = 0;
             for (JoinEvent event : allJoinEvents) {
@@ -144,7 +144,11 @@ public class MessageService {
                             java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME
                         );
                         
-                        if (eventTime.isAfter(yesterday)) {
+                        // UTC를 KST로 변환하여 비교
+                        java.time.ZonedDateTime utcEventTime = eventTime.atZone(java.time.ZoneId.of("UTC"));
+                        java.time.ZonedDateTime kstEventTime = utcEventTime.withZoneSameInstant(java.time.ZoneId.of("Asia/Seoul"));
+                        
+                        if (kstEventTime.isAfter(yesterdayKst)) {
                             count++;
                         }
                     } catch (Exception e) {
@@ -160,18 +164,25 @@ public class MessageService {
         }
     }
     
-    // 간단한 시간별 메시지 수 계산 (최근 메시지 50개만 사용)
+    // 시간별 메시지 수 계산 (최근 24시간)
     private java.util.List<StatisticsDto.HourlyCountDto> calculateSimpleHourlyCounts() {
         try {
-            // 최근 메시지 50개만 가져와서 시간별로 그룹화
-            org.springframework.data.domain.Pageable pageable = 
-                org.springframework.data.domain.PageRequest.of(0, 50);
-            org.springframework.data.domain.Page<UplinkMessage> recentMessages = 
-                uplinkMessageRepository.findAllByOrderByTimestampDesc(pageable);
+            // KST 현재 시간 기준으로 24시간 전부터 시작
+            java.time.ZonedDateTime nowKst = java.time.ZonedDateTime.now(java.time.ZoneId.of("Asia/Seoul"));
+            java.time.ZonedDateTime startTime = nowKst.minusHours(23).withMinute(0).withSecond(0).withNano(0);
             
-            java.util.Map<String, Long> hourlyMap = new java.util.HashMap<>();
+            // 24시간 동안의 모든 시간대를 미리 생성 (0으로 초기화)
+            java.util.Map<String, Long> hourlyMap = new java.util.LinkedHashMap<>();
+            for (int i = 0; i < 24; i++) {
+                java.time.ZonedDateTime hourTime = startTime.plusHours(i);
+                String hourKey = hourTime.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:00"));
+                hourlyMap.put(hourKey, 0L);
+            }
             
-            for (UplinkMessage message : recentMessages.getContent()) {
+            // 모든 메시지를 가져와서 최근 24시간 내의 메시지만 필터링
+            List<UplinkMessage> allMessages = uplinkMessageRepository.findAll();
+            
+            for (UplinkMessage message : allMessages) {
                 String timestampString = message.getTimestamp();
                 if (timestampString != null && !timestampString.isEmpty()) {
                     try {
@@ -180,21 +191,29 @@ public class MessageService {
                             java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME
                         );
                         
-                        String hourKey = msgTime.format(
-                            java.time.format.DateTimeFormatter.ofPattern("MM-dd HH:00")
-                        );
+                        // UTC를 KST(+9시간)로 변환
+                        java.time.ZonedDateTime utcTime = msgTime.atZone(java.time.ZoneId.of("UTC"));
+                        java.time.ZonedDateTime kstTime = utcTime.withZoneSameInstant(java.time.ZoneId.of("Asia/Seoul"));
                         
-                        hourlyMap.put(hourKey, hourlyMap.getOrDefault(hourKey, 0L) + 1);
+                        // 최근 24시간 내의 메시지만 처리
+                        if (kstTime.isAfter(startTime.minusHours(1)) && kstTime.isBefore(nowKst.plusHours(1))) {
+                            String hourKey = kstTime.format(
+                                java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:00")
+                            );
+                            
+                            if (hourlyMap.containsKey(hourKey)) {
+                                hourlyMap.put(hourKey, hourlyMap.get(hourKey) + 1);
+                            }
+                        }
                     } catch (Exception e) {
                         // 파싱 실패시 무시
                     }
                 }
             }
             
-            // 결과를 리스트로 변환하고 정렬
+            // 결과를 리스트로 변환 (시간 순서대로 정렬됨)
             return hourlyMap.entrySet().stream()
                 .map(entry -> new StatisticsDto.HourlyCountDto(entry.getKey(), entry.getValue()))
-                .sorted((a, b) -> a.getHour().compareTo(b.getHour()))
                 .collect(Collectors.toList());
                 
         } catch (Exception e) {
