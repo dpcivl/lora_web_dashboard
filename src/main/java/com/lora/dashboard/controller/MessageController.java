@@ -13,7 +13,6 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -56,14 +55,6 @@ public class MessageController {
         return ResponseEntity.ok(messages);
     }
 
-    @GetMapping("/range")
-    public ResponseEntity<List<UplinkMessage>> getMessagesInRange(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endTime) {
-        
-        List<UplinkMessage> messages = messageService.getMessagesInTimeRange(startTime, endTime);
-        return ResponseEntity.ok(messages);
-    }
 
     @GetMapping("/device/{deviceId}/latest")
     public ResponseEntity<UplinkMessage> getLatestDeviceMessage(@PathVariable String deviceId) {
@@ -72,6 +63,12 @@ public class MessageController {
             return ResponseEntity.ok(message);
         }
         return ResponseEntity.notFound().build();
+    }
+
+    @GetMapping("/count")
+    public ResponseEntity<Long> getMessageCount() {
+        Long count = messageService.getMessageCount();
+        return ResponseEntity.ok(count);
     }
 
     @GetMapping("/statistics")

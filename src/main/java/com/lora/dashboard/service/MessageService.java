@@ -12,7 +12,6 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -62,60 +61,15 @@ public class MessageService {
     }
 
     public StatisticsDto getStatistics() {
-        LocalDateTime last24Hours = LocalDateTime.now().minusHours(24);
-        LocalDateTime lastWeek = LocalDateTime.now().minusDays(7);
-
         StatisticsDto stats = new StatisticsDto();
 
-        // 기본 통계
+        // 기본 통계 (간단한 버전)
         stats.setTotalMessages(uplinkMessageRepository.count());
-        stats.setLast24HourMessages(
-            (long) uplinkMessageRepository.findByTimestampBetweenOrderByTimestampDesc(
-                last24Hours, LocalDateTime.now()).size()
-        );
-        stats.setActiveDevices(uplinkMessageRepository.countActiveDevices(last24Hours));
         stats.setTotalJoinEvents(joinEventRepository.count());
-        stats.setRecentJoinEvents(joinEventRepository.countRecentJoinEvents(last24Hours));
-
-        // 디바이스별 메시지 수
-        List<Object[]> deviceCounts = uplinkMessageRepository.getDeviceMessageCounts(lastWeek);
-        stats.setDeviceCounts(
-            deviceCounts.stream()
-                .map(row -> new StatisticsDto.DeviceCountDto(
-                    (String) row[0], 
-                    ((Number) row[1]).longValue()
-                ))
-                .collect(Collectors.toList())
-        );
-
-        // 신호 품질 통계
-        Object[] signalStats = uplinkMessageRepository.getSignalQualityStats(lastWeek);
-        if (signalStats != null && signalStats.length >= 4) {
-            stats.setSignalQuality(new StatisticsDto.SignalQualityStatsDto(
-                ((Number) signalStats[0]).longValue(),
-                ((Number) signalStats[1]).longValue(),
-                ((Number) signalStats[2]).longValue(),
-                ((Number) signalStats[3]).longValue()
-            ));
-        }
-
-        // 시간별 메시지 수 (지난 24시간)
-        List<Object[]> hourlyCounts = uplinkMessageRepository.getHourlyMessageCounts(last24Hours);
-        stats.setHourlyCounts(
-            hourlyCounts.stream()
-                .map(row -> new StatisticsDto.HourlyCountDto(
-                    (String) row[0],
-                    ((Number) row[1]).longValue()
-                ))
-                .collect(Collectors.toList())
-        );
 
         return stats;
     }
 
-    public List<UplinkMessage> getMessagesInTimeRange(LocalDateTime startTime, LocalDateTime endTime) {
-        return uplinkMessageRepository.findByTimestampBetweenOrderByTimestampDesc(startTime, endTime);
-    }
 
     public UplinkMessage getLatestMessageByDevice(String deviceId) {
         return uplinkMessageRepository.findFirstByDeviceIdOrderByTimestampDesc(deviceId);
@@ -123,5 +77,9 @@ public class MessageService {
 
     public JoinEvent getLatestJoinEventByDevice(String deviceId) {
         return joinEventRepository.findFirstByDeviceIdOrderByTimestampDesc(deviceId);
+    }
+
+    public Long getMessageCount() {
+        return uplinkMessageRepository.count();
     }
 }

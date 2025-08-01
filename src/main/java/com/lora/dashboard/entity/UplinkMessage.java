@@ -1,7 +1,6 @@
 package com.lora.dashboard.entity;
 
 import jakarta.persistence.*;
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "uplink_messages")
@@ -11,7 +10,7 @@ public class UplinkMessage {
     private Long id;
     
     @Column(name = "timestamp", nullable = false)
-    private LocalDateTime timestamp;
+    private String timestamp;
     
     @Column(name = "application_id", nullable = false)
     private String applicationId;
@@ -65,7 +64,7 @@ public class UplinkMessage {
     private String rawTopic;
     
     @Column(name = "created_at")
-    private LocalDateTime createdAt;
+    private String createdAt;
 
     // Default constructor
     public UplinkMessage() {}
@@ -79,11 +78,11 @@ public class UplinkMessage {
         this.id = id;
     }
 
-    public LocalDateTime getTimestamp() {
+    public String getTimestamp() {
         return timestamp;
     }
 
-    public void setTimestamp(LocalDateTime timestamp) {
+    public void setTimestamp(String timestamp) {
         this.timestamp = timestamp;
     }
 
@@ -223,11 +222,11 @@ public class UplinkMessage {
         this.rawTopic = rawTopic;
     }
 
-    public LocalDateTime getCreatedAt() {
+    public String getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(LocalDateTime createdAt) {
+    public void setCreatedAt(String createdAt) {
         this.createdAt = createdAt;
     }
 

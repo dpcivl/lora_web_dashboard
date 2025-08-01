@@ -3,11 +3,10 @@ package com.lora.dashboard.dto;
 import com.lora.dashboard.entity.SignalQuality;
 import com.lora.dashboard.entity.JoinEvent;
 
-import java.time.LocalDateTime;
 
 public class JoinEventDto {
     private Long id;
-    private LocalDateTime timestamp;
+    private String timestamp;
     private String applicationId;
     private String deviceId;
     private String devEui;
@@ -21,7 +20,7 @@ public class JoinEventDto {
     private Float longitude;
     private String hostname;
     private String rawTopic;
-    private LocalDateTime createdAt;
+    private String createdAt;
     private String signalQuality;
 
     public JoinEventDto() {}
@@ -66,8 +65,8 @@ public class JoinEventDto {
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
-    public LocalDateTime getTimestamp() { return timestamp; }
-    public void setTimestamp(LocalDateTime timestamp) { this.timestamp = timestamp; }
+    public String getTimestamp() { return timestamp; }
+    public void setTimestamp(String timestamp) { this.timestamp = timestamp; }
 
     public String getApplicationId() { return applicationId; }
     public void setApplicationId(String applicationId) { this.applicationId = applicationId; }
@@ -108,8 +107,8 @@ public class JoinEventDto {
     public String getRawTopic() { return rawTopic; }
     public void setRawTopic(String rawTopic) { this.rawTopic = rawTopic; }
 
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public String getCreatedAt() { return createdAt; }
+    public void setCreatedAt(String createdAt) { this.createdAt = createdAt; }
 
     public String getSignalQuality() { return signalQuality; }
     public void setSignalQuality(String signalQuality) { this.signalQuality = signalQuality; }

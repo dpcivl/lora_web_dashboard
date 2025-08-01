@@ -8,7 +8,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -23,21 +22,11 @@ public interface JoinEventRepository extends JpaRepository<JoinEvent, Long> {
     // 최근 JOIN 이벤트 조회
     Page<JoinEvent> findAllByOrderByTimestampDesc(Pageable pageable);
     
-    // 시간 범위별 JOIN 이벤트 조회
-    List<JoinEvent> findByTimestampBetweenOrderByTimestampDesc(
-        LocalDateTime startTime, LocalDateTime endTime);
     
     // DevEUI별 JOIN 이벤트 조회
     List<JoinEvent> findByDevEuiOrderByTimestampDesc(String devEui);
     
-    // 최근 JOIN 이벤트 수
-    @Query("SELECT COUNT(j) FROM JoinEvent j WHERE j.timestamp >= :since")
-    Long countRecentJoinEvents(@Param("since") LocalDateTime since);
     
-    // 디바이스별 JOIN 통계
-    @Query("SELECT j.deviceId, COUNT(j) as count FROM JoinEvent j " +
-           "WHERE j.timestamp >= :since GROUP BY j.deviceId ORDER BY count DESC")
-    List<Object[]> getDeviceJoinCounts(@Param("since") LocalDateTime since);
     
     // 특정 디바이스의 최근 JOIN 이벤트
     JoinEvent findFirstByDeviceIdOrderByTimestampDesc(String deviceId);
