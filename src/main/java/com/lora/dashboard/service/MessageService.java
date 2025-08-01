@@ -63,9 +63,33 @@ public class MessageService {
     public StatisticsDto getStatistics() {
         StatisticsDto stats = new StatisticsDto();
 
-        // 기본 통계 (간단한 버전)
+        // 기본 통계
         stats.setTotalMessages(uplinkMessageRepository.count());
         stats.setTotalJoinEvents(joinEventRepository.count());
+        
+        // 간단한 추가 통계 (기본값)
+        stats.setLast24HourMessages(0L); // timestamp가 String이므로 일단 0으로 설정
+        stats.setActiveDevices(0L);
+        stats.setRecentJoinEvents(0L);
+        
+        // 디바이스별 메시지 수 (간단 버전)
+        java.util.List<StatisticsDto.DeviceCountDto> deviceCounts = new java.util.ArrayList<>();
+        // 전체 디바이스 목록을 가져와서 각각의 메시지 수를 계산
+        java.util.List<String> deviceIds = uplinkMessageRepository.findDistinctDeviceIds();
+        for (String deviceId : deviceIds) {
+            Long count = uplinkMessageRepository.countByDeviceId(deviceId);
+            deviceCounts.add(new StatisticsDto.DeviceCountDto(deviceId, count));
+        }
+        // 메시지 많은 순으로 정렬
+        deviceCounts.sort((a, b) -> Long.compare(b.getCount(), a.getCount()));
+        stats.setDeviceCounts(deviceCounts);
+        
+        // 빈 시간별 데이터
+        stats.setHourlyCounts(new java.util.ArrayList<>());
+        
+        // 신호 품질 기본값
+        StatisticsDto.SignalQualityStatsDto signalQuality = new StatisticsDto.SignalQualityStatsDto(0L, 0L, 0L, 0L);
+        stats.setSignalQuality(signalQuality);
 
         return stats;
     }

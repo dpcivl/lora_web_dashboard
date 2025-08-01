@@ -29,4 +29,11 @@ public interface UplinkMessageRepository extends JpaRepository<UplinkMessage, Lo
     // 특정 디바이스의 최근 메시지
     UplinkMessage findFirstByDeviceIdOrderByTimestampDesc(String deviceId);
     
+    // 디바이스별 메시지 수 계산
+    Long countByDeviceId(String deviceId);
+    
+    // 모든 디바이스 ID 목록
+    @Query("SELECT DISTINCT m.deviceId FROM UplinkMessage m")
+    List<String> findDistinctDeviceIds();
+    
 }
