@@ -1,0 +1,141 @@
+import React, { useState, useEffect } from 'react';
+import { joinEventAPI } from '../api/client';
+import { JoinEvent, ApiResponse, SignalQuality } from '../types';
+
+const JoinEventList: React.FC = () => {
+  const [joinEvents, setJoinEvents] = useState<JoinEvent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
+
+  useEffect(() => {
+    fetchJoinEvents();
+  }, [page]);
+
+  const fetchJoinEvents = async () => {
+    try {
+      setLoading(true);
+      const response = await joinEventAPI.getRecentJoinEvents(page, 20);
+      const data: ApiResponse<JoinEvent> = response.data;
+      
+      setJoinEvents(data.content);
+      setTotalPages(data.totalPages);
+      setTotalElements(data.totalElements);
+      setError(null);
+    } catch (error) {
+      console.error('JOIN 이벤트 조회 실패:', error);
+      setError('JOIN 이벤트를 불러올 수 없습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatSignalQuality = (quality: SignalQuality) => {
+    const classMap = {
+      [SignalQuality.EXCELLENT]: 'signal-excellent',
+      [SignalQuality.GOOD]: 'signal-good',
+      [SignalQuality.FAIR]: 'signal-fair',
+      [SignalQuality.POOR]: 'signal-poor'
+    };
+
+    const textMap = {
+      [SignalQuality.EXCELLENT]: '매우 좋음',
+      [SignalQuality.GOOD]: '좋음',
+      [SignalQuality.FAIR]: '보통',
+      [SignalQuality.POOR]: '나쁨'
+    };
+
+    return (
+      <span className={classMap[quality]}>
+        {textMap[quality]}
+      </span>
+    );
+  };
+
+  const formatTimestamp = (timestamp: string) => {
+    return new Date(timestamp).toLocaleString('ko-KR');
+  };
+
+  if (loading) {
+    return <div className="loading">JOIN 이벤트를 불러오는 중...</div>;
+  }
+
+  if (error) {
+    return <div className="error">{error}</div>;
+  }
+
+  return (
+    <div className="join-event-list">
+      <div className="card">
+        <div className="card-header">
+          <h2>최근 JOIN 이벤트 ({totalElements.toLocaleString()}개)</h2>
+        </div>
+        <div className="card-body">
+          <table className="table">
+            <thead>
+              <tr>
+                <th>시간</th>
+                <th>디바이스 ID</th>
+                <th>DevEUI</th>
+                <th>JoinEUI</th>
+                <th>DevAddr</th>
+                <th>RSSI</th>
+                <th>SNR</th>
+                <th>신호 품질</th>
+              </tr>
+            </thead>
+            <tbody>
+              {joinEvents.map(event => (
+                <tr key={event.id}>
+                  <td>{formatTimestamp(event.timestamp)}</td>
+                  <td>
+                    <code>{event.deviceId}</code>
+                  </td>
+                  <td>
+                    <code style={{ fontSize: '0.85em' }}>{event.devEui}</code>
+                  </td>
+                  <td>
+                    <code style={{ fontSize: '0.85em' }}>{event.joinEui}</code>
+                  </td>
+                  <td>
+                    <code style={{ fontSize: '0.85em' }}>{event.devAddr}</code>
+                  </td>
+                  <td>{event.rssi} dBm</td>
+                  <td>{event.snr} dB</td>
+                  <td>{formatSignalQuality(event.signalQuality)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          {joinEvents.length === 0 && (
+            <div style={{ textAlign: 'center', padding: '2rem', color: '#6c757d' }}>
+              JOIN 이벤트가 없습니다.
+            </div>
+          )}
+
+          {/* 페이지네이션 */}
+          <div className="pagination">
+            <button 
+              disabled={page === 0} 
+              onClick={() => setPage(page - 1)}>
+              이전
+            </button>
+            <span>
+              {page + 1} / {totalPages} 페이지
+            </span>
+            <button 
+              disabled={page >= totalPages - 1} 
+              onClick={() => setPage(page + 1)}>
+              다음
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default JoinEventList;
