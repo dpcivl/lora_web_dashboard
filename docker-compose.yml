@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  lora-web-dashboard:
+    build: .
+    ports:
+      - "3001:80"      # Frontend (Nginx) - port 3000은 개발서버용이므로 3001 사용
+      - "8081:8081"    # Backend API (Chirpstack이 8080 사용하므로 8081 사용)
+    volumes:
+      - ./lora_gateway.db:/app/lora_gateway.db:rw  # SQLite 데이터베이스 마운트
+      - ./logs:/app/logs:rw                        # 로그 디렉터리 마운트
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:sqlite:/app/lora_gateway.db
+      - SERVER_PORT=8081
+      - LOGGING_FILE_NAME=/app/logs/lora-web-dashboard.log
+    restart: unless-stopped
+    
+  # MQTT Broker (Eclipse Mosquitto) - LoRa Gateway Logger와 함께 사용
+  mosquitto:
+    image: eclipse-mosquitto:2.0
+    ports:
+      - "1883:1883"    # MQTT
+      - "9001:9001"    # MQTT WebSocket
+    volumes:
+      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+    restart: unless-stopped
+
+  # LoRa Gateway Logger (Python) - 별도로 빌드된 이미지 사용
+  lora-gateway-logger:
+    image: lora-gateway-logger:latest  # 미리 빌드된 이미지 사용
+    depends_on:
+      - mosquitto
+    volumes:
+      - ./lora_gateway.db:/app/lora_gateway.db:rw
+      - ./logs:/app/logs:rw
+    environment:
+      - MQTT_BROKER_HOST=mosquitto
+      - MQTT_BROKER_PORT=1883
+      - DATABASE_PATH=/app/lora_gateway.db
+      - LOG_FILE=/app/logs/lora_gateway.log
+    restart: unless-stopped
+
+networks:
+  default:
+    name: lora-network
