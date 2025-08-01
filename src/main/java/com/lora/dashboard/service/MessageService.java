@@ -12,7 +12,11 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -67,10 +71,14 @@ public class MessageService {
         stats.setTotalMessages(uplinkMessageRepository.count());
         stats.setTotalJoinEvents(joinEventRepository.count());
         
-        // 간단한 추가 통계 (기본값)
-        stats.setLast24HourMessages(0L); // timestamp가 String이므로 일단 0으로 설정
-        stats.setActiveDevices(0L);
-        stats.setRecentJoinEvents(0L);
+        // 24시간 내 메시지와 활성 디바이스 계산
+        LocalDateTime last24Hours = LocalDateTime.now().minusHours(24);
+        long last24HourMessages = calculateMessagesAfter(last24Hours);
+        long activeDevices = calculateActiveDevicesAfter(last24Hours);
+        
+        stats.setLast24HourMessages(last24HourMessages);
+        stats.setActiveDevices(activeDevices);
+        stats.setRecentJoinEvents(0L); // JOIN 이벤트는 나중에 구현
         
         // 디바이스별 메시지 수 (간단 버전)
         java.util.List<StatisticsDto.DeviceCountDto> deviceCounts = new java.util.ArrayList<>();
@@ -84,8 +92,9 @@ public class MessageService {
         deviceCounts.sort((a, b) -> Long.compare(b.getCount(), a.getCount()));
         stats.setDeviceCounts(deviceCounts);
         
-        // 빈 시간별 데이터
-        stats.setHourlyCounts(new java.util.ArrayList<>());
+        // 시간별 메시지 수 계산 (최근 24시간)
+        java.util.List<StatisticsDto.HourlyCountDto> hourlyCounts = calculateHourlyMessageCounts(last24Hours);
+        stats.setHourlyCounts(hourlyCounts);
         
         // 신호 품질 기본값
         StatisticsDto.SignalQualityStatsDto signalQuality = new StatisticsDto.SignalQualityStatsDto(0L, 0L, 0L, 0L);
@@ -105,5 +114,70 @@ public class MessageService {
 
     public Long getMessageCount() {
         return uplinkMessageRepository.count();
+    }
+    
+    // String timestamp를 LocalDateTime으로 파싱하는 헬퍼 메서드
+    private LocalDateTime parseTimestamp(String timestamp) {
+        if (timestamp == null || timestamp.isEmpty()) {
+            return null;
+        }
+        
+        try {
+            // "2025-08-01T01:11:09.845112" 형식 파싱
+            return LocalDateTime.parse(timestamp, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+        } catch (DateTimeParseException e) {
+            // 파싱 실패시 null 반환
+            return null;
+        }
+    }
+    
+    // 특정 시간 이후의 메시지 수 계산
+    private long calculateMessagesAfter(LocalDateTime afterTime) {
+        List<UplinkMessage> allMessages = uplinkMessageRepository.findAll();
+        return allMessages.stream()
+                .filter(msg -> {
+                    LocalDateTime msgTime = parseTimestamp(msg.getTimestamp());
+                    return msgTime != null && msgTime.isAfter(afterTime);
+                })
+                .count();
+    }
+    
+    // 특정 시간 이후의 활성 디바이스 수 계산
+    private long calculateActiveDevicesAfter(LocalDateTime afterTime) {
+        List<UplinkMessage> allMessages = uplinkMessageRepository.findAll();
+        return allMessages.stream()
+                .filter(msg -> {
+                    LocalDateTime msgTime = parseTimestamp(msg.getTimestamp());
+                    return msgTime != null && msgTime.isAfter(afterTime);
+                })
+                .map(UplinkMessage::getDeviceId)
+                .distinct()
+                .count();
+    }
+    
+    // 시간별 메시지 수 계산
+    private java.util.List<StatisticsDto.HourlyCountDto> calculateHourlyMessageCounts(LocalDateTime afterTime) {
+        List<UplinkMessage> allMessages = uplinkMessageRepository.findAll();
+        
+        // 시간별로 메시지를 그룹화
+        Map<String, Long> hourlyMap = allMessages.stream()
+                .filter(msg -> {
+                    LocalDateTime msgTime = parseTimestamp(msg.getTimestamp());
+                    return msgTime != null && msgTime.isAfter(afterTime);
+                })
+                .collect(Collectors.groupingBy(
+                    msg -> {
+                        LocalDateTime msgTime = parseTimestamp(msg.getTimestamp());
+                        if (msgTime == null) return "unknown";
+                        return msgTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:00:00"));
+                    },
+                    Collectors.counting()
+                ));
+        
+        // 결과를 시간 순으로 정렬하여 반환
+        return hourlyMap.entrySet().stream()
+                .map(entry -> new StatisticsDto.HourlyCountDto(entry.getKey(), entry.getValue()))
+                .sorted((a, b) -> a.getHour().compareTo(b.getHour()))
+                .collect(Collectors.toList());
     }
 }
