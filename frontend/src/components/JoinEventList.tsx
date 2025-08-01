@@ -125,7 +125,6 @@ const JoinEventList: React.FC<JoinEventListProps> = ({ applicationId }) => {
                 <th>시간</th>
                 <th>디바이스 ID</th>
                 <th>DevEUI</th>
-                <th>JoinEUI</th>
                 <th>DevAddr</th>
                 <th>RSSI</th>
                 <th>SNR</th>
@@ -141,9 +140,6 @@ const JoinEventList: React.FC<JoinEventListProps> = ({ applicationId }) => {
                   </td>
                   <td>
                     <code style={{ fontSize: '0.85em' }}>{event.devEui}</code>
-                  </td>
-                  <td>
-                    <code style={{ fontSize: '0.85em' }}>{event.joinEui || 'N/A'}</code>
                   </td>
                   <td>
                     <code style={{ fontSize: '0.85em' }}>{event.devAddr || 'N/A'}</code>
