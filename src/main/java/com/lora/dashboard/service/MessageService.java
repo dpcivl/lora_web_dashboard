@@ -144,9 +144,8 @@ public class MessageService {
                             java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME
                         );
                         
-                        // UTC를 KST로 변환하여 비교
-                        java.time.ZonedDateTime utcEventTime = eventTime.atZone(java.time.ZoneId.of("UTC"));
-                        java.time.ZonedDateTime kstEventTime = utcEventTime.withZoneSameInstant(java.time.ZoneId.of("Asia/Seoul"));
+                        // timestamp가 이미 KST라고 가정 (시간대 변환 안함)
+                        java.time.ZonedDateTime kstEventTime = eventTime.atZone(java.time.ZoneId.of("Asia/Seoul"));
                         
                         if (kstEventTime.isAfter(yesterdayKst)) {
                             count++;
@@ -191,9 +190,8 @@ public class MessageService {
                             java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME
                         );
                         
-                        // UTC를 KST(+9시간)로 변환
-                        java.time.ZonedDateTime utcTime = msgTime.atZone(java.time.ZoneId.of("UTC"));
-                        java.time.ZonedDateTime kstTime = utcTime.withZoneSameInstant(java.time.ZoneId.of("Asia/Seoul"));
+                        // timestamp가 이미 KST라고 가정 (시간대 변환 안함)
+                        java.time.ZonedDateTime kstTime = msgTime.atZone(java.time.ZoneId.of("Asia/Seoul"));
                         
                         // 최근 24시간 내의 메시지만 처리
                         if (kstTime.isAfter(startTime.minusHours(1)) && kstTime.isBefore(nowKst.plusHours(1))) {
