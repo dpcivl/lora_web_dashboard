@@ -36,4 +36,8 @@ public interface UplinkMessageRepository extends JpaRepository<UplinkMessage, Lo
     @Query("SELECT DISTINCT m.deviceId FROM UplinkMessage m")
     List<String> findDistinctDeviceIds();
     
+    // 모든 애플리케이션 ID 목록
+    @Query("SELECT DISTINCT m.applicationId FROM UplinkMessage m ORDER BY m.applicationId")
+    List<String> findDistinctApplicationIds();
+    
 }

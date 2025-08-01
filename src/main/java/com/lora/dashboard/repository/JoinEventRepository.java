@@ -30,4 +30,8 @@ public interface JoinEventRepository extends JpaRepository<JoinEvent, Long> {
     
     // 특정 디바이스의 최근 JOIN 이벤트
     JoinEvent findFirstByDeviceIdOrderByTimestampDesc(String deviceId);
+    
+    // 모든 애플리케이션 ID 목록
+    @Query("SELECT DISTINCT j.applicationId FROM JoinEvent j ORDER BY j.applicationId")
+    List<String> findDistinctApplicationIds();
 }

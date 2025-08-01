@@ -76,4 +76,10 @@ public class MessageController {
         StatisticsDto stats = messageService.getStatistics();
         return ResponseEntity.ok(stats);
     }
+
+    @GetMapping("/applications")
+    public ResponseEntity<List<String>> getApplications() {
+        List<String> applications = messageService.getAllApplicationIds();
+        return ResponseEntity.ok(applications);
+    }
 }

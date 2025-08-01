@@ -50,4 +50,10 @@ public class JoinEventController {
         }
         return ResponseEntity.notFound().build();
     }
+
+    @GetMapping("/applications")
+    public ResponseEntity<List<String>> getJoinEventApplications() {
+        List<String> applications = messageService.getAllJoinEventApplicationIds();
+        return ResponseEntity.ok(applications);
+    }
 }
