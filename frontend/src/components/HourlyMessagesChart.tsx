@@ -23,12 +23,15 @@ ChartJS.register(
 );
 
 interface HourlyMessagesChartProps {
-  hourlyCounts: HourlyCount[];
+  hourlyCounts: HourlyCount[] | undefined;
 }
 
 const HourlyMessagesChart: React.FC<HourlyMessagesChartProps> = ({ hourlyCounts }) => {
+  // hourlyCounts가 undefined인 경우 빈 배열 사용
+  const counts = hourlyCounts || [];
+  
   const data = {
-    labels: hourlyCounts.map(item => {
+    labels: counts.map(item => {
       const date = new Date(item.hour);
       return date.toLocaleTimeString('ko-KR', { 
         hour: '2-digit', 
@@ -38,7 +41,7 @@ const HourlyMessagesChart: React.FC<HourlyMessagesChartProps> = ({ hourlyCounts 
     datasets: [
       {
         label: '시간별 메시지 수',
-        data: hourlyCounts.map(item => item.count),
+        data: counts.map(item => item.count),
         borderColor: '#007bff',
         backgroundColor: 'rgba(0, 123, 255, 0.1)',
         tension: 0.4,
@@ -77,7 +80,13 @@ const HourlyMessagesChart: React.FC<HourlyMessagesChartProps> = ({ hourlyCounts 
     <div className="chart-container">
       <h3>시간별 메시지 수 (최근 24시간)</h3>
       <div style={{ height: '300px' }}>
-        <Line data={data} options={options} />
+        {counts.length > 0 ? (
+          <Line data={data} options={options} />
+        ) : (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#666' }}>
+            시간별 데이터가 없습니다
+          </div>
+        )}
       </div>
     </div>
   );

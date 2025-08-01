@@ -6,7 +6,7 @@ import { SignalQualityStats } from '../types';
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 interface SignalQualityChartProps {
-  signalQuality: SignalQualityStats | null;
+  signalQuality: SignalQualityStats | null | undefined;
 }
 
 const SignalQualityChart: React.FC<SignalQualityChartProps> = ({ signalQuality }) => {

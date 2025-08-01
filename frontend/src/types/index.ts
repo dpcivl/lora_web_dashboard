@@ -9,11 +9,11 @@ export interface UplinkMessage {
   payloadText: string;
   payloadSize: number;
   frameCount: number;
-  fPort: number;
-  frequency: number;
-  dataRate: number;
-  rssi: number;
-  snr: number;
+  fPort?: number;
+  frequency?: number;
+  dataRate?: number;
+  rssi?: number;
+  snr?: number;
   latitude?: number;
   longitude?: number;
   hostname: string;
@@ -28,12 +28,12 @@ export interface JoinEvent {
   applicationId: string;
   deviceId: string;
   devEui: string;
-  joinEui: string;
-  devAddr: string;
-  frequency: number;
-  dataRate: number;
-  rssi: number;
-  snr: number;
+  joinEui?: string;
+  devAddr?: string;
+  frequency?: number;
+  dataRate?: number;
+  rssi?: number;
+  snr?: number;
   latitude?: number;
   longitude?: number;
   hostname: string;
@@ -50,14 +50,14 @@ export enum SignalQuality {
 }
 
 export interface Statistics {
-  totalMessages: number;
-  last24HourMessages: number;
-  activeDevices: number;
-  totalJoinEvents: number;
-  recentJoinEvents: number;
-  deviceCounts: DeviceCount[];
-  signalQuality: SignalQualityStats;
-  hourlyCounts: HourlyCount[];
+  totalMessages?: number;
+  last24HourMessages?: number;
+  activeDevices?: number;
+  totalJoinEvents?: number;
+  recentJoinEvents?: number;
+  deviceCounts?: DeviceCount[];
+  signalQuality?: SignalQualityStats;
+  hourlyCounts?: HourlyCount[];
 }
 
 export interface DeviceCount {

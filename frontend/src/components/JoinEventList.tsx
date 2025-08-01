@@ -70,7 +70,7 @@ const JoinEventList: React.FC = () => {
     <div className="join-event-list">
       <div className="card">
         <div className="card-header">
-          <h2>최근 JOIN 이벤트 ({totalElements.toLocaleString()}개)</h2>
+          <h2>최근 JOIN 이벤트 ({totalElements?.toLocaleString() || 0}개)</h2>
         </div>
         <div className="card-body">
           <table className="table">
@@ -87,7 +87,7 @@ const JoinEventList: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {joinEvents.map(event => (
+              {joinEvents?.map(event => (
                 <tr key={event.id}>
                   <td>{formatTimestamp(event.timestamp)}</td>
                   <td>
@@ -97,20 +97,20 @@ const JoinEventList: React.FC = () => {
                     <code style={{ fontSize: '0.85em' }}>{event.devEui}</code>
                   </td>
                   <td>
-                    <code style={{ fontSize: '0.85em' }}>{event.joinEui}</code>
+                    <code style={{ fontSize: '0.85em' }}>{event.joinEui || 'N/A'}</code>
                   </td>
                   <td>
-                    <code style={{ fontSize: '0.85em' }}>{event.devAddr}</code>
+                    <code style={{ fontSize: '0.85em' }}>{event.devAddr || 'N/A'}</code>
                   </td>
-                  <td>{event.rssi} dBm</td>
-                  <td>{event.snr} dB</td>
+                  <td>{event.rssi ? `${event.rssi} dBm` : 'N/A'}</td>
+                  <td>{event.snr ? `${event.snr} dB` : 'N/A'}</td>
                   <td>{formatSignalQuality(event.signalQuality)}</td>
                 </tr>
               ))}
             </tbody>
           </table>
 
-          {joinEvents.length === 0 && (
+          {(!joinEvents || joinEvents.length === 0) && (
             <div style={{ textAlign: 'center', padding: '2rem', color: '#6c757d' }}>
               JOIN 이벤트가 없습니다.
             </div>

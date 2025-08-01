@@ -70,7 +70,7 @@ const MessageList: React.FC = () => {
     <div className="message-list">
       <div className="card">
         <div className="card-header">
-          <h2>최근 LoRa 메시지 ({totalElements.toLocaleString()}개)</h2>
+          <h2>최근 LoRa 메시지 ({totalElements?.toLocaleString() || 0}개)</h2>
         </div>
         <div className="card-body">
           <table className="table">
@@ -87,7 +87,7 @@ const MessageList: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {messages.map(message => (
+              {messages?.map(message => (
                 <tr key={message.id}>
                   <td>{formatTimestamp(message.timestamp)}</td>
                   <td>
@@ -101,8 +101,8 @@ const MessageList: React.FC = () => {
                       </span>
                     )}
                   </td>
-                  <td>{message.rssi} dBm</td>
-                  <td>{message.snr} dB</td>
+                  <td>{message.rssi ? `${message.rssi} dBm` : 'N/A'}</td>
+                  <td>{message.snr ? `${message.snr} dB` : 'N/A'}</td>
                   <td>{formatSignalQuality(message.signalQuality)}</td>
                   <td>{message.frameCount}</td>
                 </tr>
@@ -110,7 +110,7 @@ const MessageList: React.FC = () => {
             </tbody>
           </table>
 
-          {messages.length === 0 && (
+          {(!messages || messages.length === 0) && (
             <div style={{ textAlign: 'center', padding: '2rem', color: '#6c757d' }}>
               메시지가 없습니다.
             </div>

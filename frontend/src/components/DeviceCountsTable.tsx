@@ -3,11 +3,11 @@ import { Link } from 'react-router-dom';
 import { DeviceCount } from '../types';
 
 interface DeviceCountsTableProps {
-  deviceCounts: DeviceCount[];
+  deviceCounts: DeviceCount[] | undefined;
 }
 
 const DeviceCountsTable: React.FC<DeviceCountsTableProps> = ({ deviceCounts }) => {
-  const displayCounts = deviceCounts.slice(0, 10); // 상위 10개만 표시
+  const displayCounts = deviceCounts?.slice(0, 10) || []; // 상위 10개만 표시
 
   return (
     <div className="card">
@@ -35,7 +35,7 @@ const DeviceCountsTable: React.FC<DeviceCountsTableProps> = ({ deviceCounts }) =
                     <code>{device.deviceId}</code>
                   </td>
                   <td>
-                    <strong>{device.count.toLocaleString()}</strong>
+                    <strong>{device.count?.toLocaleString() || 0}</strong>
                   </td>
                   <td>
                     <Link 
