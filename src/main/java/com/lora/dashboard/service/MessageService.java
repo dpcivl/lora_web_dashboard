@@ -138,14 +138,11 @@ public class MessageService {
                 String timestampString = event.getTimestamp();
                 if (timestampString != null && !timestampString.isEmpty()) {
                     try {
-                        // "2025-08-01T00:45:09.480899" 형식 파싱
-                        java.time.LocalDateTime eventTime = java.time.LocalDateTime.parse(
+                        // Timezone 정보가 포함된 timestamp 파싱 (예: 2025-08-01T13:52:22.048925+09:00)
+                        java.time.ZonedDateTime kstEventTime = java.time.ZonedDateTime.parse(
                             timestampString, 
-                            java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME
+                            java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME
                         );
-                        
-                        // timestamp가 이미 KST라고 가정 (시간대 변환 안함)
-                        java.time.ZonedDateTime kstEventTime = eventTime.atZone(java.time.ZoneId.of("Asia/Seoul"));
                         
                         if (kstEventTime.isAfter(yesterdayKst)) {
                             count++;
@@ -181,30 +178,30 @@ public class MessageService {
             // 모든 메시지를 가져와서 최근 24시간 내의 메시지만 필터링
             List<UplinkMessage> allMessages = uplinkMessageRepository.findAll();
             
+            int processedCount = 0;
             for (UplinkMessage message : allMessages) {
                 String timestampString = message.getTimestamp();
                 if (timestampString != null && !timestampString.isEmpty()) {
                     try {
-                        java.time.LocalDateTime msgTime = java.time.LocalDateTime.parse(
+                        // Timezone 정보가 포함된 timestamp 파싱 (예: 2025-08-01T13:52:22.048925+09:00)
+                        java.time.ZonedDateTime kstTime = java.time.ZonedDateTime.parse(
                             timestampString, 
-                            java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME
+                            java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME
                         );
                         
-                        // timestamp가 이미 KST라고 가정 (시간대 변환 안함)
-                        java.time.ZonedDateTime kstTime = msgTime.atZone(java.time.ZoneId.of("Asia/Seoul"));
+                        String hourKey = kstTime.format(
+                            java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:00")
+                        );
                         
-                        // 최근 24시간 내의 메시지만 처리
-                        if (kstTime.isAfter(startTime.minusHours(1)) && kstTime.isBefore(nowKst.plusHours(1))) {
-                            String hourKey = kstTime.format(
-                                java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:00")
-                            );
-                            
+                        // 24시간 범위 확인 (단순하게 startTime 이후, nowKst 이전)  
+                        if (kstTime.isAfter(startTime.minusMinutes(1)) && kstTime.isBefore(nowKst.plusMinutes(1))) {
                             if (hourlyMap.containsKey(hourKey)) {
                                 hourlyMap.put(hourKey, hourlyMap.get(hourKey) + 1);
+                                processedCount++;
                             }
                         }
                     } catch (Exception e) {
-                        // 파싱 실패시 무시
+                        // 파싱 실패시 무시 (로그 제거)
                     }
                 }
             }
